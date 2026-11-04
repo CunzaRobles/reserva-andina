@@ -1,0 +1,187 @@
+services:
+  # ---------- Anfitriones ----------
+  anfitriones:
+    build: ./anfitriones
+    container_name: anfitriones-app
+    ports:
+      - "3001:3001"
+    environment:
+      PORT: 3001
+      DB_HOST: anfitriones-db
+      DB_PORT: 5432
+      DB_NAME: anfitriones_db
+      DB_USER: anfitriones_user
+      DB_PASSWORD: anfitriones123
+    depends_on:
+      anfitriones-db:
+        condition: service_healthy
+
+  anfitriones-db:
+    image: postgres:16
+    container_name: anfitriones-db
+    environment:
+      POSTGRES_DB: anfitriones_db
+      POSTGRES_USER: anfitriones_user
+      POSTGRES_PASSWORD: anfitriones123
+    volumes:
+      - anfitriones_data:/var/lib/postgresql/data
+      - ./anfitriones/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U anfitriones_user -d anfitriones_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # ---------- Experiencias ----------
+  experiencias:
+    build: ./experiencias
+    container_name: experiencias-app
+    ports:
+      - "3002:3002"
+    environment:
+      PORT: 3002
+      DB_HOST: experiencias-db
+      DB_PORT: 5432
+      DB_NAME: experiencias_db
+      DB_USER: experiencias_user
+      DB_PASSWORD: experiencias123
+      ANFITRIONES_URL: http://anfitriones:3001
+    depends_on:
+      experiencias-db:
+        condition: service_healthy
+      anfitriones:
+        condition: service_started
+
+  experiencias-db:
+    image: postgres:16
+    container_name: experiencias-db
+    environment:
+      POSTGRES_DB: experiencias_db
+      POSTGRES_USER: experiencias_user
+      POSTGRES_PASSWORD: experiencias123
+    volumes:
+      - experiencias_data:/var/lib/postgresql/data
+      - ./experiencias/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U experiencias_user -d experiencias_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # ---------- Disponibilidad ----------
+  disponibilidad:
+    build: ./disponibilidad
+    container_name: disponibilidad-app
+    ports:
+      - "3003:3003"
+    environment:
+      PORT: 3003
+      DB_HOST: disponibilidad-db
+      DB_PORT: 5432
+      DB_NAME: disponibilidad_db
+      DB_USER: disponibilidad_user
+      DB_PASSWORD: disponibilidad123
+    depends_on:
+      disponibilidad-db:
+        condition: service_healthy
+
+  disponibilidad-db:
+    image: postgres:16
+    container_name: disponibilidad-db
+    environment:
+      POSTGRES_DB: disponibilidad_db
+      POSTGRES_USER: disponibilidad_user
+      POSTGRES_PASSWORD: disponibilidad123
+    volumes:
+      - disponibilidad_data:/var/lib/postgresql/data
+      - ./disponibilidad/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U disponibilidad_user -d disponibilidad_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # ---------- Notificaciones ----------
+  notificaciones:
+    build: ./notificaciones
+    container_name: notificaciones-app
+    ports:
+      - "3005:3005"
+    environment:
+      PORT: 3005
+      DB_HOST: notificaciones-db
+      DB_PORT: 5432
+      DB_NAME: notificaciones_db
+      DB_USER: notificaciones_user
+      DB_PASSWORD: notificaciones123
+    depends_on:
+      notificaciones-db:
+        condition: service_healthy
+
+  notificaciones-db:
+    image: postgres:16
+    container_name: notificaciones-db
+    environment:
+      POSTGRES_DB: notificaciones_db
+      POSTGRES_USER: notificaciones_user
+      POSTGRES_PASSWORD: notificaciones123
+    volumes:
+      - notificaciones_data:/var/lib/postgresql/data
+      - ./notificaciones/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U notificaciones_user -d notificaciones_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # ---------- Reservas ----------
+  reservas:
+    build: ./reservas
+    container_name: reservas-app
+    ports:
+      - "3004:3004"
+    environment:
+      PORT: 3004
+      DB_HOST: reservas-db
+      DB_PORT: 5432
+      DB_NAME: reservas_db
+      DB_USER: reservas_user
+      DB_PASSWORD: reservas123
+      ANFITRIONES_URL: http://anfitriones:3001
+      EXPERIENCIAS_URL: http://experiencias:3002
+      DISPONIBILIDAD_URL: http://disponibilidad:3003
+      NOTIFICACIONES_URL: http://notificaciones:3005
+    depends_on:
+      reservas-db:
+        condition: service_healthy
+      anfitriones:
+        condition: service_started
+      experiencias:
+        condition: service_started
+      disponibilidad:
+        condition: service_started
+      notificaciones:
+        condition: service_started
+
+  reservas-db:
+    image: postgres:16
+    container_name: reservas-db
+    environment:
+      POSTGRES_DB: reservas_db
+      POSTGRES_USER: reservas_user
+      POSTGRES_PASSWORD: reservas123
+    volumes:
+      - reservas_data:/var/lib/postgresql/data
+      - ./reservas/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U reservas_user -d reservas_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  anfitriones_data:
+  experiencias_data:
+  disponibilidad_data:
+  notificaciones_data:
+  reservas_data:
